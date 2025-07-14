@@ -4,3 +4,9 @@ Set Bots Status 👇
 client.user.setStatus('online');
 client.user.setActivity('GhostX Code');
 ```
+```bash
+  npm install
+```
+```bash
+  node index.js
+```
