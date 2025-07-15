@@ -96,6 +96,16 @@ module.exports = {
                         .setDescription('New color (hex code like #FF0000 or color name)')
                         .setRequired(true)
                 )
+        )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('info')
+                .setDescription('Display detailed information about a role')
+                .addRoleOption(option =>
+                    option.setName('role')
+                        .setDescription('Role to get information about')
+                        .setRequired(true)
+                )
         ),
 
     async execute(interaction) {
@@ -141,6 +151,9 @@ module.exports = {
                     break;
                 case 'color':
                     await this.handleRoleColor(interaction);
+                    break;
+                case 'info':
+                    await this.handleRoleInfo(interaction);
                     break;
             }
         } catch (error) {
@@ -407,6 +420,50 @@ module.exports = {
             .setTitle('Role Color Changed')
             .setDescription(`Successfully changed **${role.name}** color to ${colorInput}`)
             .setColor(color)
+            .setTimestamp();
+
+        await interaction.reply({ embeds: [embed] });
+    },
+
+    async handleRoleInfo(interaction) {
+        const role = interaction.options.getRole('role');
+        
+        // Get role permissions
+        const permissions = role.permissions.toArray();
+        const permissionList = permissions.length > 0 
+            ? permissions.map(perm => `• ${perm.replace(/([A-Z])/g, ' $1').trim()}`).join('\n')
+            : 'No special permissions';
+        
+        // Get member count for this role
+        const membersWithRole = role.members.size;
+        
+        // Check if role is hoisted (displayed separately)
+        const hoisted = role.hoist ? 'Yes' : 'No';
+        
+        // Check if role is mentionable
+        const mentionable = role.mentionable ? 'Yes' : 'No';
+        
+        // Check if role is managed by a bot/integration
+        const managed = role.managed ? 'Yes (Bot/Integration)' : 'No';
+        
+        // Format color
+        const colorHex = role.hexColor !== '#000000' ? role.hexColor : 'Default';
+
+        const embed = new EmbedBuilder()
+            .setTitle(`Role Information: ${role.name}`)
+            .addFields(
+                { name: 'Role Name', value: role.name, inline: true },
+                { name: 'Role ID', value: role.id, inline: true },
+                { name: 'Color', value: colorHex, inline: true },
+                { name: 'Position', value: role.position.toString(), inline: true },
+                { name: 'Members', value: membersWithRole.toString(), inline: true },
+                { name: 'Hoisted', value: hoisted, inline: true },
+                { name: 'Mentionable', value: mentionable, inline: true },
+                { name: 'Managed', value: managed, inline: true },
+                { name: 'Created', value: `<t:${Math.floor(role.createdTimestamp / 1000)}:F>`, inline: true },
+                { name: 'Permissions', value: permissionList.length > 1024 ? 'Too many to display' : permissionList, inline: false }
+            )
+            .setColor(role.color || 0x00AE86)
             .setTimestamp();
 
         await interaction.reply({ embeds: [embed] });
